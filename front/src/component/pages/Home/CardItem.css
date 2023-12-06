@@ -1,0 +1,35 @@
+.cardItem{
+    display: flex;
+    text-align: left;
+    border: 1px solid grey;
+    flex-direction: column;
+    background: #F6F4F4;
+    padding:10px;
+
+}
+.cardItem:hover{
+    background: lightblue;
+}
+.card_info{
+    display: flex;
+    margin-top: 2%;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    font-size: 20px;
+}
+.cardicon{
+    height: 50px;
+    width: 50px;
+    float:left;
+}
+.card_type{
+    font-size: 14px;
+    color:grey;
+}
+.sum{
+    margin-left: auto;
+}
+.abil{
+    margin-left: 5%;
+}

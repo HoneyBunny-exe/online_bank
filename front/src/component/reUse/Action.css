@@ -1,0 +1,23 @@
+.action{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width:100%;
+    padding: 2%;
+    border-radius: 22px;
+}
+.action:hover{
+    background: lightblue;
+}
+.act_img{
+    float: left;
+    padding: 5px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #F6F4F4;
+}
+.act_txt{
+    margin-left: 3%;
+    font-size: 20px;
+}
