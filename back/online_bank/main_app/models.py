@@ -52,5 +52,23 @@ class Card(models.Model):
     token_card = models.UUIDField(unique=True)
     pin_hash = models.BinaryField(null=True)
     cvc_hash = models.BinaryField()
+    payment_system = models.CharField(max_length=255)
     account = models.ForeignKey('Account', on_delete=models.PROTECT, related_name='cards')
 
+
+class Operation(models.Model):
+    class Status(models.TextChoices):
+        SUCCESS = 'success'
+        FAILED = 'failed'
+        PENDING = 'pending'
+
+    status_operation = models.TextField(choices=Status.choices)
+    start_transaction = models.DateTimeField(auto_now_add=True)
+    end_transaction = models.DateTimeField(null=True)
+    description = models.JSONField()
+
+
+class ATM(models.Model):
+    longitude = models.FloatField()
+    latitude = models.FloatField()
+    description = models.JSONField()
