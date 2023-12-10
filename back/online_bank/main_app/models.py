@@ -33,7 +33,7 @@ class Account(models.Model):
     account_number = models.CharField(max_length=20, unique=True,
                                       validators=[custom_validators.exec_account_check_number])
     currency = models.CharField(max_length=3)
-    balance = models.DecimalField()
+    balance = models.DecimalField(max_digits=32, decimal_places=2)
     user = models.ForeignKey('User', on_delete=models.PROTECT, related_name='accounts')
 
 
