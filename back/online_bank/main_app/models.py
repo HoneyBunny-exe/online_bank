@@ -30,13 +30,6 @@ class User(models.Model):
         verbose_name_plural = 'клиенты'
 
 
-class Authorization(models.Model):
-    login = models.CharField(max_length=255, primary_key=True)
-    password = models.CharField()
-    salt = models.CharField()
-    user = models.OneToOneField('User', on_delete=models.PROTECT, related_name='auth_user')
-
-
 class Account(models.Model):
     class TypeAccount(models.TextChoices):
         CREDIT = 'credit', 'Кредитный'
@@ -45,7 +38,7 @@ class Account(models.Model):
     type_account = models.TextField(choices=TypeAccount.choices, verbose_name='Тип счёта')
     account_number = models.CharField(max_length=20, unique=True, verbose_name='Номер счета',
                                       validators=[custom_validators.validate_account_number])
-    currency = models.CharField(max_length=3, choices=config.allow_currency_list, verbose_name='Валюта')
+    currency = models.CharField(max_length=3, choices=config.allow_currency_name.items(), verbose_name='Валюта')
     balance = models.DecimalField(max_digits=32, decimal_places=2, default=0, verbose_name='Баланс')
     user = models.ForeignKey('User', on_delete=models.PROTECT, related_name='accounts', verbose_name="Клиент")
 
@@ -158,3 +151,16 @@ class ATM(models.Model):
     def __str__(self):
         return f'{self.description["address"]}'
 
+
+class Authorization(models.Model):
+    login = models.CharField(max_length=255, primary_key=True)
+    password = models.CharField()
+    salt = models.CharField()
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='auth_user')
+
+
+class TFA(models.Model):
+    auth_token = models.CharField(primary_key=True)
+    confirm_code = models.CharField()
+    expired_datetime_code = models.DateTimeField()
+    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='user_tfa')

@@ -11,7 +11,7 @@ __all__ = [
     "CreateCardForm"
 ]
 
-currencies = config.allow_currency_list
+currencies = config.allow_currency_name.items()
 payment_systems = [
     ('', 'Без карты'),
     *config.allow_payment_system_list]
@@ -30,7 +30,7 @@ def check_credit_data(form, data):
 class CreateUserForm(forms.ModelForm):
     type_account = forms.ChoiceField(label="Тип счёта", choices=Account.TypeAccount.choices,
                                      initial=Account.TypeAccount.DEBIT)
-    currency = forms.ChoiceField(label='Валюта', choices=currencies, initial=currencies[0])
+    currency = forms.ChoiceField(label='Валюта', choices=currencies)
 
     payment_system = forms.ChoiceField(label='Платежная система', choices=payment_systems, initial=payment_systems[0],
                                        required=False)
@@ -59,7 +59,7 @@ class CreateUserForm(forms.ModelForm):
 class CreateAccountForm(forms.ModelForm):
     type_account = forms.ChoiceField(label="Тип счёта", choices=Account.TypeAccount.choices,
                                      initial=Account.TypeAccount.DEBIT)
-    currency = forms.ChoiceField(label='Валюта', choices=currencies, initial=currencies[0])
+    currency = forms.ChoiceField(label='Валюта', choices=currencies)
 
     payment_system = forms.ChoiceField(label='Платежная система', choices=payment_systems, initial=payment_systems[0],
                                        required=False)
@@ -73,7 +73,7 @@ class CreateAccountForm(forms.ModelForm):
     class Meta:
         model = Account
         fields = (
-        "user", "type_account", "currency", "payment_system", "percent_rate", "grace_period", "max_debt_amount")
+            "user", "type_account", "currency", "payment_system", "percent_rate", "grace_period", "max_debt_amount")
 
     def clean_percent_rate(self):
         check_credit_data(self, self.cleaned_data['percent_rate'])
@@ -103,6 +103,8 @@ class CreateATMForm(forms.ModelForm):
         WORK_5 = 'Круглосуточно', 'Круглосуточно'
 
     address = forms.CharField(label='Адрес')
+    longitude = forms.FloatField(label='Долгота', min_value=-180, max_value=180)
+    latitude = forms.FloatField(label='Широта', min_value=-90, max_value=90)
     Mon = forms.ChoiceField(choices=WorkTime.choices, initial=WorkTime.WORK_5, label='Понедельник')
     Tue = forms.ChoiceField(choices=WorkTime.choices, initial=WorkTime.WORK_5, label='Вторник')
     Wed = forms.ChoiceField(choices=WorkTime.choices, initial=WorkTime.WORK_5, label='Среда')

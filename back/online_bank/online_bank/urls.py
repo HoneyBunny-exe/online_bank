@@ -15,10 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from main_app.views import RegistrationAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/v1/', include("main_app.api_urls")),
+    path('auth/registration/', RegistrationAPIView.as_view())
 ]
 
 admin.site.site_header = 'Wordskills Bank'

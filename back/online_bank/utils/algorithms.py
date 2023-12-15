@@ -1,5 +1,5 @@
 import config
-from config import BankConfig, allow_currency, allow_payment_system
+from config import BankConfig, allow_currency_code, allow_payment_system
 import datetime
 import random
 
@@ -37,7 +37,7 @@ def calculate_card_check_sum(card_number: str) -> int:
 def create_new_account(currency: str) -> str:
     prefix = "40817"
     init_number = 14159265358
-    currency_code = str(allow_currency[currency])
+    currency_code = allow_currency_code[currency]
     account_number = "%011d" % (init_number ^ BankConfig.get_account_counter())
     row_number = ''.join((prefix, currency_code, '0', account_number[-11:]))
     check_number = str(calculate_account_check_sum(row_number))
@@ -48,7 +48,7 @@ def create_new_account(currency: str) -> str:
 def create_new_card(payment_system: str) -> str:
     init_number = 718281828
     BIN = BankConfig.get_bin()
-    payment_system_code = str(allow_payment_system[payment_system])
+    payment_system_code = allow_payment_system[payment_system]
     card_number = "%09d" % (init_number ^ BankConfig.get_card_counter())
     row_number = ''.join((payment_system_code, BIN, card_number[-9:], "0"))
     check_number = str(calculate_card_check_sum(row_number))
