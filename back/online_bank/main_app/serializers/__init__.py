@@ -3,6 +3,6 @@ from .registration import CreateRegistrationSerializer, UpdateRegistrationSerial
 from .TFA import TwoFactoryAuthentication
 from .authorization import CreateAuthorizationSerializer, UpdateAuthorizationSerializer, UpdateJWTSerializer
 from .user_info import UserInfoSerializer
-from .account_info import AccountInfoSerializer
+from .account_info import AccountInfoSerializer, CreateAccountSerializer
 from .card_info import CardInfoSerializer
 from .transfer_money import CreateTransferMoneySerializer, UpdateTransferMoneySerializer

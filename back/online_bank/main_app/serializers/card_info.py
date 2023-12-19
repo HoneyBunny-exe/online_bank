@@ -1,5 +1,8 @@
+from django.db import transaction
 from rest_framework import serializers
+from utils import UserContext
 from ..models import Card
+from config import allow_payment_system_list
 
 
 class CardInfoSerializer(serializers.ModelSerializer):
@@ -29,3 +32,28 @@ class CardInfoSerializer(serializers.ModelSerializer):
 
     def get_account_number(self, obj):
         return obj.account.account_number
+
+
+class CreateAccountSerializer(serializers.Serializer):
+    payment_system = serializers.ChoiceField(choices=allow_payment_system_list)
+    _response = None
+
+    def create(self, validated_data):
+        user = UserContext.get_user()
+        with transaction.atomic():
+            account = Account.create_account(Account.TypeAccount.DEBIT, validated_data["currency"], user)
+            contract = Contract.create_contract(account)
+            account.save()
+            contract.save()
+
+        self._response = {
+            "account_number": account.account_number,
+            "type_account": account.type_account,
+            "currency": account.currency,
+            "balance": account.balance,
+            "description": contract.description
+        }
+        return account
+
+    def get_response(self):
+        return self._response

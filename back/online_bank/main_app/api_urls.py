@@ -10,4 +10,5 @@ urlpatterns = [
     path('get_accounts/', views.AccountInfoAPIView.as_view()),
     path('get_cards/', views.CardInfoAPIView.as_view()),
     path('transfer_money/', views.TransferMoneyAPIView.as_view()),
+    path('create_account/', views.CreateAccountAPIView.as_view()),
 ]

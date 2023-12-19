@@ -16,3 +16,4 @@ class CardInfoAPIView(JWTAuthenticationAPIView, FilterMixin):
             return Response(serializers.CardInfoSerializer(cards, many=True).data)
         except ModelError:
             raise APIError("Неверные параметры запроса")
+
