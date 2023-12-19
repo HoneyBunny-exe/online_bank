@@ -110,6 +110,9 @@ class Card(models.Model):
                                       choices=config.allow_payment_system_list, verbose_name='Платежная система')
     account = models.ForeignKey('Account', on_delete=models.PROTECT, related_name='cards')
 
+    def get_name(self):
+        return self.card_number[:4] + "*" * 8 + self.card_number[-4:]
+
     class Meta:
         verbose_name = 'карта'
         verbose_name_plural = 'карты'

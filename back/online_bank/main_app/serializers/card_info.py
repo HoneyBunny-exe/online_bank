@@ -1,7 +1,6 @@
-from django.db import transaction
-from rest_framework import serializers
-from utils import UserContext
-from ..models import Card
+from rest_framework import serializers, exceptions
+from utils import UserContext, custom_validators
+from ..models import Card, Account
 from config import allow_payment_system_list
 
 
@@ -18,8 +17,7 @@ class CardInfoSerializer(serializers.ModelSerializer):
                   'token_card', 'end_date', 'is_activated', 'payment_system')
 
     def get_card_name(self, obj):
-        card_number = obj.card_number
-        return card_number[:4] + "*" * 8 + card_number[-4:]
+        return obj.get_name()
 
     def get_type_account(self, obj):
         return obj.account.type_account
@@ -34,26 +32,61 @@ class CardInfoSerializer(serializers.ModelSerializer):
         return obj.account.account_number
 
 
-class CreateAccountSerializer(serializers.Serializer):
+class CreateCardSerializer(serializers.Serializer):
     payment_system = serializers.ChoiceField(choices=allow_payment_system_list)
+    account = serializers.CharField(max_length=20, min_length=20)
     _response = None
+
+    def validate_account(self, account):
+        custom_validators.validate_account_number(account, is_api=True)
+        return account
 
     def create(self, validated_data):
         user = UserContext.get_user()
-        with transaction.atomic():
-            account = Account.create_account(Account.TypeAccount.DEBIT, validated_data["currency"], user)
-            contract = Contract.create_contract(account)
-            account.save()
-            contract.save()
+        try:
+            account = Account.objects.get(account_number=validated_data['account'], user=user)
+        except Account.DoesNotExist:
+            raise exceptions.ValidationError("Недействительнный номер счета")
 
+        card = Card.create_card(account, payment_system=validated_data["payment_system"])
+        card.save()
+        card_number = card.card_number
         self._response = {
             "account_number": account.account_number,
             "type_account": account.type_account,
             "currency": account.currency,
             "balance": account.balance,
-            "description": contract.description
+            "card_name": card.get_name(),
+            "token_card": card.token_card,
+            "end_date": card.end_date,
+            "is_activated": card.is_activated,
+            "payment_system": card.payment_system,
         }
-        return account
+        return card
 
     def get_response(self):
         return self._response
+
+
+class BlockCardSerializer(serializers.Serializer):
+    token_card = serializers.CharField()
+    status = serializers.BooleanField()
+    _response = None
+
+    def create(self, validated_data):
+        user = UserContext.get_user()
+        try:
+            card = Card.objects.get(account__user=user, token_card=validated_data["token_card"])
+        except Card.DoesNotExist:
+            raise exceptions.ValidationError("Недействительнный токен карты")
+
+        card.is_activated = validated_data['status']
+        card.save()
+        self._response = {
+            "is_activated": card.is_activated,
+        }
+        return card
+
+    def get_response(self):
+        return self._response
+

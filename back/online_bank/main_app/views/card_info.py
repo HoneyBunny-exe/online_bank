@@ -17,3 +17,18 @@ class CardInfoAPIView(JWTAuthenticationAPIView, FilterMixin):
         except ModelError:
             raise APIError("Неверные параметры запроса")
 
+
+class CreateCardAPIView(JWTAuthenticationAPIView):
+    def post(self, request):
+        serializer = serializers.CreateCardSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.get_response())
+
+
+class BlockCardAPIView(JWTAuthenticationAPIView):
+    def post(self, request):
+        serializer = serializers.BlockCardSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.get_response())
