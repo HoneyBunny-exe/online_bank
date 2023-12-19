@@ -1,7 +1,9 @@
 import config
 from config import BankConfig, allow_currency_code, allow_payment_system
 import datetime
+import json
 import random
+import base64
 
 
 def lune_algorithm(arr_n: list[int], arr_k: list[int], length: int, weight: int = 0) -> int:
@@ -75,3 +77,13 @@ def get_end_date_for_card():
     today = datetime.date.today()
     year = today.year
     return today.replace(year=year + config.ACTIVE_CARD_PERIOD_IN_YEARS)
+
+
+def serialize_to_json(data: dict):
+    serialized_data = json.dumps(data)
+    return serialized_data.encode('UTF-8')
+
+
+def deserialize_to_dict(row_json):
+    serialized_data = json.loads(row_json)
+    return serialized_data

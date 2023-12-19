@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime, timedelta
 from django.db import models, DatabaseError
-from utils import custom_validators, algorithms
+from utils import custom_validators, algorithms, auth_tools
 import config
 
 
@@ -18,8 +19,8 @@ class User(models.Model):
     sex = models.TextField(choices=Sex.choices, verbose_name='Пол')
     birthday = models.DateField(verbose_name='День рождения')
     phone_number = models.CharField(max_length=16, validators=[custom_validators.validate_phone_number],
-                                    verbose_name='Номер телефона')
-    email = models.EmailField(null=True, verbose_name='Email')
+                                    verbose_name='Номер телефона', unique=True)
+    email = models.EmailField(verbose_name='Email', unique=True)
     other_info = models.JSONField(verbose_name='Дополнительная информация')
 
     def __str__(self):
@@ -133,10 +134,21 @@ class Operation(models.Model):
         FAILED = 'failed'
         PENDING = 'pending'
 
+    operation_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     status_operation = models.TextField(choices=Status.choices)
     start_transaction = models.DateTimeField(auto_now_add=True)
     end_transaction = models.DateTimeField(null=True)
     description = models.JSONField()
+
+    @staticmethod
+    def start_operation(description: dict):
+        return Operation.objects.create(status_operation=Operation.Status.PENDING, description=description)
+
+    @staticmethod
+    def end_operation(operation, status: Status):
+        operation.end_transaction = datetime.utcnow()
+        operation.status_operation = status
+        operation.save()
 
 
 class ATM(models.Model):
@@ -160,7 +172,36 @@ class Authorization(models.Model):
 
 
 class TFA(models.Model):
-    auth_token = models.CharField(primary_key=True)
+    class Event(models.TextChoices):
+        Registration = "Registration", "Регистрация"
+        Authorization = "Authorization", "Авторизация"
+        Transfer = "Transfer", "Перевод денег"
+
+    tfa_id = models.CharField(primary_key=True)
     confirm_code = models.CharField()
     expired_datetime_code = models.DateTimeField()
-    user = models.OneToOneField('User', on_delete=models.CASCADE, related_name='user_tfa')
+    event = models.CharField(choices=Event.choices)
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='user_tfa')
+
+
+class Session(models.Model):
+    api_id = models.UUIDField(primary_key=True)
+    update_session_datetime = models.DateTimeField(auto_now=True)
+    refresh_token = models.CharField()
+    user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='sessions')
+
+    @staticmethod
+    def create_session(user):
+        api_id = uuid.uuid4().hex
+        expiration_datetime = datetime.utcnow() + timedelta(seconds=config.INTERVAL_API_TOKEN_IN_SECONDS)
+        access_token, refresh_token = auth_tools.create_jwt_tokens(api_id, expiration_datetime)
+        Session.objects.create(api_id=api_id, refresh_token=refresh_token, user=user)
+        return access_token, refresh_token
+
+    @staticmethod
+    def update_session(session):
+        expiration_datetime = datetime.utcnow() + timedelta(seconds=config.INTERVAL_API_TOKEN_IN_SECONDS)
+        access_token, refresh_token = auth_tools.create_jwt_tokens(session.api_id.hex, expiration_datetime)
+        session.refresh_token = refresh_token
+        session.save()
+        return access_token, refresh_token

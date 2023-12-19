@@ -1,7 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db import transaction
+from django.forms import ValidationError
 from . import forms
-from utils import algorithms
+from utils import algorithms, message_tools
 from .models import Account, ATM, Card, Contract, User
 
 
@@ -13,25 +14,31 @@ class UserAdmin(admin.ModelAdmin):
     save_on_top = True
 
     def save_model(self, request, obj, form, change):
-        type_account = form.data["type_account"]
-        currency = form.data["currency"]
-        payment_system = form.data["payment_system"]
-        percent_rate = form.data["percent_rate"]
-        grace_period = form.data["grace_period"]
-        max_debt_amount = form.data["max_debt_amount"]
-        with transaction.atomic():
-            obj.other_info = {"passport_scans": ""}
-            obj.save()
-            account = Account.create_account(type_account=type_account, currency=currency, user=obj)
-            account.save()
+        if not change:
+            type_account = form.data["type_account"]
+            currency = form.data["currency"]
+            payment_system = form.data["payment_system"]
+            percent_rate = form.data["percent_rate"]
+            grace_period = form.data["grace_period"]
+            max_debt_amount = form.data["max_debt_amount"]
+            with transaction.atomic():
+                obj.other_info = {"passport_scans": ""}
+                obj.save()
+                account = Account.create_account(type_account=type_account, currency=currency, user=obj)
+                account.save()
 
-            contract = Contract.create_contract(account, percent_rate=percent_rate, grace_period=grace_period,
-                                                max_debt_amount=max_debt_amount)
+                contract = Contract.create_contract(account, percent_rate=percent_rate, grace_period=grace_period,
+                                                    max_debt_amount=max_debt_amount)
 
-            contract.save()
-            if payment_system:
-                card = Card.create_card(account, payment_system=payment_system)
-                card.save()
+                contract.save()
+                if payment_system:
+                    card = Card.create_card(account, payment_system=payment_system)
+                    card.save()
+                message_tools.send_welcome_message(obj, account)
+
+    def response_change(self, request, obj):
+        self.message_user(request, "Данные клиентов запрещено изменять", messages.ERROR)
+        return self.response_post_save_change(request, obj)
 
 
 @admin.register(Account)
@@ -50,20 +57,25 @@ class AccountAdmin(admin.ModelAdmin):
         return f"{account.contract.contract_number}"
 
     def save_model(self, request, obj, form, change):
-        currency = form.data["currency"]
-        payment_system = form.data["payment_system"]
-        percent_rate = form.data["percent_rate"]
-        grace_period = form.data["grace_period"]
-        max_debt_amount = form.data["max_debt_amount"]
-        with transaction.atomic():
-            obj.account_number = algorithms.create_new_account(currency)
-            obj.save()
-            contract = Contract.create_contract(obj, percent_rate=percent_rate, grace_period=grace_period,
-                                                max_debt_amount=max_debt_amount)
-            contract.save()
-            if payment_system:
-                card = Card.create_card(obj, payment_system=payment_system)
-                card.save()
+        if not change:
+            currency = form.data["currency"]
+            payment_system = form.data["payment_system"]
+            percent_rate = form.data["percent_rate"]
+            grace_period = form.data["grace_period"]
+            max_debt_amount = form.data["max_debt_amount"]
+            with transaction.atomic():
+                obj.account_number = algorithms.create_new_account(currency)
+                obj.save()
+                contract = Contract.create_contract(obj, percent_rate=percent_rate, grace_period=grace_period,
+                                                    max_debt_amount=max_debt_amount)
+                contract.save()
+                if payment_system:
+                    card = Card.create_card(obj, payment_system=payment_system)
+                    card.save()
+
+    def response_change(self, request, obj):
+        self.message_user(request, "Платежные данные клиентов запрещено изменять", messages.ERROR)
+        return self.response_post_save_change(request, obj)
 
 
 @admin.register(Card)
@@ -71,19 +83,24 @@ class CardAdmin(admin.ModelAdmin):
     form = forms.CreateCardForm
     list_display = ("card_number", "end_date", "is_activated", "payment_system", "account_ref")
     search_fields = ("card_number",)
-    list_editable = ("is_activated",)
 
     @admin.display(description='Клиент/Номер счета')
     def account_ref(self, contract: Contract):
         return str(contract.account)
 
     def save_model(self, request, obj, form, change):
-        payment_system = form.data["payment_system"]
-        with transaction.atomic():
-            obj.card_number = algorithms.create_new_card(payment_system)
-            obj.end_date = algorithms.get_end_date_for_card()
-            obj.cvc_hash = algorithms.create_cvc_code()
-            obj.save()
+        if not change:
+            payment_system = form.data["payment_system"]
+            with transaction.atomic():
+                obj.card_number = algorithms.create_new_card(payment_system)
+                obj.end_date = algorithms.get_end_date_for_card()
+                obj.cvc_hash = algorithms.create_cvc_code()
+                obj.save()
+
+    def response_change(self, request, obj):
+        self.message_user(request, "Платежные данные клиентов запрещено изменять", messages.ERROR)
+        return self.response_post_save_change(request, obj)
+
 
 
 @admin.register(ATM)

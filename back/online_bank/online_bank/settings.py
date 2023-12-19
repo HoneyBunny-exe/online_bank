@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-q$!^$v!xmz!my9^7c2hy#if$d&nncg-qbv=b37pqd)4%@o)96c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["127.0.0.1", "192.168.165.14"]
 
 # Application definition
 
@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main_app',
     'rest_framework',
-    # 'rest_framework.authtoken'
 ]
 
 MIDDLEWARE = [
@@ -48,6 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'main_app.middlewares.ContextMiddleware',
 ]
 
 ROOT_URLCONF = 'online_bank.urls'
@@ -125,5 +125,10 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer'
-    ]
+    ],
+    # 'DEFAULT_AUTHENTICATION_CLASSES': [
+    #     'main_app.auth.JWTAuthentication'
+    # ]
 }
+
+

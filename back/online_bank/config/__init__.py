@@ -1,13 +1,14 @@
 import os
 
 DEBT_ARRER = "0.1"
-INIT_VALUE = "10"
+INIT_VALUE = "15"
 ACTIVE_CARD_PERIOD_IN_YEARS = 6
 PERCENT_SALE = -2
 PERCENT_PURCHASE = 3
 OFFSET_TIMEZONE = 3
 LENGTH_CONFIRM_CODE = 6
-INTERVAL_CONFIRM_CODE_IN_SECONDS = 2*60
+INTERVAL_CONFIRM_CODE_IN_SECONDS = 200
+INTERVAL_API_TOKEN_IN_SECONDS = 18000
 
 
 class BankConfig:
@@ -102,3 +103,5 @@ allow_payment_system = {
 
 allow_payment_system_list = [("MasterCard", "MasterCard"), ("Visa", "Visa"), ("China Union Pay", "China Union Pay"),
                              ("МИР", "МИР")]
+
+SECRET_KEY = b"d618cb0c9ad5adf872886e7ad2cec1f96ccdc57a8b95b01b0eaa092ee445e618"

@@ -1,6 +1,15 @@
+from datetime import datetime
 import secrets
 import hashlib
+import base64
+import enum
+from .algorithms import serialize_to_json, deserialize_to_dict
 import config
+
+
+class TypeToken(enum.StrEnum):
+    REFRESH = 'refresh'
+    ACCESS = 'access'
 
 
 def calculate_password_hash(row_password: str, salt: str = None):
@@ -12,26 +21,58 @@ def calculate_password_hash(row_password: str, salt: str = None):
     return password_hash.hex(), salt.hex()
 
 
-def compare_passwords(password_hash: str, salt: str, row_password: str):
-    new_hash, _ = calculate_password_hash(row_password, salt)
-    a = bytes.fromhex(password_hash)
-    b = bytes.fromhex(new_hash)
-    return secrets.compare_digest(a, b)
-
-
 def compare_digest(hash_a, hash_b):
-    a = bytes.fromhex(hash_a)
-    b = bytes.fromhex(hash_b)
-    return secrets.compare_digest(a, b)
+    return secrets.compare_digest(hash_a, hash_b)
 
 
-def create_auth_token(unique_string: str):
-    salt = secrets.token_bytes(16)
-    token = hashlib.pbkdf2_hmac('sha256', unique_string.encode(), salt, 2048, dklen=32)
-    return token.hex()
+def verify_passwords(password_hash: str, salt: str, row_password: str):
+    new_hash, _ = calculate_password_hash(row_password, salt)
+    return compare_digest(password_hash, new_hash)
 
 
 def create_confirm_code():
     code = [str(secrets.randbelow(10)) for _ in range(config.LENGTH_CONFIRM_CODE)]
     return ''.join(code)
 
+
+def create_token(binary_date):
+    data = base64.urlsafe_b64encode(binary_date)
+    sign = hashlib.blake2b(key=config.SECRET_KEY)
+    sign.update(data)
+    return '.'.join((data.hex(), sign.hexdigest()))
+
+
+def verify_token(binary_data, tfa_sign):
+    new_tfa_token = create_token(binary_data)
+    _, new_tfa_sign = new_tfa_token.split('.')
+    return compare_digest(tfa_sign, new_tfa_sign)
+
+
+def create_jwt_tokens(token_id: str, expiration_datetime: datetime):
+    payload = {"alg": "BLAKE_2B", "uuid": token_id}
+    refresh_salt = secrets.token_hex(16)
+    binary_refresh_data = serialize_to_json(payload | {"type": TypeToken.REFRESH, "salt": refresh_salt})
+
+    access_salt = secrets.token_hex(16)
+    binary_access_data = serialize_to_json(payload | {"type": TypeToken.ACCESS, "salt": access_salt,
+                                                      "expiration_datetime": expiration_datetime.isoformat()})
+
+    access_token = create_token(binary_access_data)
+    refresh_token = create_token(binary_refresh_data)
+
+    return access_token, refresh_token
+
+
+def verify_jwt_token(binary_data, jwt_sign):
+    return verify_token(binary_data, jwt_sign)
+
+
+def parse_token(token):
+    if token is not None:
+        auth = token.split('.')
+        if len(auth) == 2:
+            data, sign = auth
+            binary_date = base64.urlsafe_b64decode(bytes.fromhex(data))
+            return binary_date, sign
+
+    raise ValueError()

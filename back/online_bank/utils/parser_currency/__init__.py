@@ -1,5 +1,6 @@
 import json
 import datetime
+from decimal import Decimal
 import copy
 import config
 
@@ -64,3 +65,18 @@ class CurrencyParser:
             cls._json_currency_prices = result
 
         return copy.deepcopy(cls._json_currency_prices)
+
+
+class CurrencyConverter:
+    @staticmethod
+    def convert(amount: Decimal, from_: str, to: str):
+        if from_ != to:
+            currencies = CurrencyParser.get_currency_prices()
+            if from_ != 'RUB':
+                amount = amount * Decimal.from_float(currencies[from_]['SalePrice'] / currencies[from_]['Nominal'])
+
+            if to != 'RUB':
+                amount = amount * Decimal.from_float(currencies[to]['Nominal']/currencies[to]['SalePrice'])
+
+        return amount
+

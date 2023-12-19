@@ -17,12 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from main_app.views import RegistrationAPIView
+from main_app.views import RegistrationAPIView, AuthorizationAPIView, UpdateJWTAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include("main_app.api_urls")),
-    path('auth/registration/', RegistrationAPIView.as_view())
+    path('auth/registration/', RegistrationAPIView.as_view()),
+    path('auth/', AuthorizationAPIView.as_view()),
+    path('auth/update_api_tokens/', UpdateJWTAPIView.as_view()),
 ]
 
 admin.site.site_header = 'Wordskills Bank'
