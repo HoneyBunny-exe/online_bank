@@ -82,9 +82,7 @@ class BlockCardSerializer(serializers.Serializer):
 
         card.is_activated = validated_data['status']
         card.save()
-        self._response = {
-            "is_activated": card.is_activated,
-        }
+        self._response = {"is_activated": card.is_activated}
         return card
 
     def get_response(self):
