@@ -70,7 +70,7 @@ class CreateCardSerializer(serializers.Serializer):
 
 class BlockCardSerializer(serializers.Serializer):
     token_card = serializers.CharField()
-    status = serializers.BooleanField()
+    is_activated = serializers.BooleanField()
     _response = None
 
     def create(self, validated_data):
@@ -80,7 +80,7 @@ class BlockCardSerializer(serializers.Serializer):
         except Card.DoesNotExist:
             raise exceptions.ValidationError("Недействительнный токен карты")
 
-        card.is_activated = validated_data['status']
+        card.is_activated = validated_data['is_activated']
         card.save()
         self._response = {"is_activated": card.is_activated}
         return card

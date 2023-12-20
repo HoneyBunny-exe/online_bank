@@ -27,7 +27,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
                         UserContext.set_user(user)
                         return user, session
 
-        except (ValueError, Session.DoesNotExist):
+        except (ValueError, Session.DoesNotExist, KeyError):
             raise exceptions.AuthenticationFailed(msg)
 
         raise exceptions.AuthenticationFailed(msg)

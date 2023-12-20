@@ -37,6 +37,10 @@ class CreateTransferMoneySerializer(serializers.Serializer):
         custom_validators.validate_account_number(account_number, is_api=True)
         return account_number
 
+    def validate_card_number_recv(self, card_number):
+        custom_validators.validate_card_number(card_number, is_api=True)
+        return card_number
+
     def validate_account_send(self, account_send):
         custom_validators.validate_account_number(account_send, is_api=True)
         return account_send
@@ -63,6 +67,9 @@ class CreateTransferMoneySerializer(serializers.Serializer):
             account_send_obj = Account.objects.get(account_number=account_send, user=user)
             if token_card_send is not None:
                 card_send_obj = Card.objects.get(token_card=token_card_send, account=account_send_obj)
+                if not card_send_obj.is_activated:
+                    raise exceptions.ValidationError("Карта отправителя заблокирована")
+
                 token_card_send = card_send_obj.card_number
 
         except (Account.DoesNotExist, Card.DoesNotExist):
@@ -144,15 +151,21 @@ class UpdateTransferMoneySerializer(TwoFactoryAuthentication):
                     card_recv_obj = Card.objects.filter(card_number=card_number_recv).all()
                     if card_recv_obj.exists():
                         card_recv_obj = card_recv_obj[0]
-                        account_recv = card_recv_obj.account
+                        if not card_recv_obj.is_activated:
+                            raise exceptions.ValidationError("Карта получателя заблокирована")
+                        account_recv_obj = card_recv_obj.account
                         amount = CurrencyConverter.convert(amount_money, account_send_obj.currency,
-                                                           account_recv.currency)
-                        account_recv.balance = models.F("balance") + amount
-                        user_recv = str(account_recv.user)
-                        account_recv = card_recv_obj.account.account_number
-                        account_recv.save()
+                                                           account_recv_obj.currency)
+                        account_recv_obj.balance = models.F("balance") + amount
+                        user_recv = str(account_recv_obj.user)
+                        account_recv = account_recv_obj.account_number
+                        account_recv_obj.save()
 
                 account_send_obj.save()
+
+        except exceptions.ValidationError as ex:
+            Operation.end_operation(operation, status=Operation.Status.FAILED)
+            raise ex
 
         except Exception as ex:
             logging.exception(ex)

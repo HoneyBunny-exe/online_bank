@@ -12,8 +12,8 @@ class CardInfoAPIView(JWTAuthenticationAPIView, FilterMixin):
             user = request.user
             filter_dict = self.filter(request, (('token_card', 'token_card'), ('is_activated', 'is_activated'),
                                                 ('payment_system', 'payment_system'),
-                                                ('account_number', 'account_number'), ('type_account', 'type_account'),
-                                                ('currency', 'currency')))
+                                                ('account__account_number', 'account_number'), ('account__type_account', 'type_account'),
+                                                ('account__currency', 'currency')))
             cards = Card.objects.filter(account__user=user, **filter_dict).select_related("account").all()
             return Response(serializers.CardInfoSerializer(cards, many=True).data)
         except ModelError:
