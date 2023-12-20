@@ -143,11 +143,13 @@ class UpdateTransferMoneySerializer(TwoFactoryAuthentication):
                 else:
                     card_recv_obj = Card.objects.filter(card_number=card_number_recv).all()
                     if card_recv_obj.exists():
-                        account_recv = card_recv_obj[0].account
+                        card_recv_obj = card_recv_obj[0]
+                        account_recv = card_recv_obj.account
                         amount = CurrencyConverter.convert(amount_money, account_send_obj.currency,
                                                            account_recv.currency)
                         account_recv.balance = models.F("balance") + amount
                         user_recv = str(account_recv.user)
+                        account_recv = card_recv_obj.account.account_number
                         account_recv.save()
 
                 account_send_obj.save()
@@ -158,6 +160,7 @@ class UpdateTransferMoneySerializer(TwoFactoryAuthentication):
             self._response = {"status_operation": Operation.Status.FAILED}
         else:
             operation.description["To"]["full_name"] = user_recv
+            operation.description["To"]["account_number"] = account_recv
             Operation.end_operation(operation, status=Operation.Status.SUCCESS)
             self._response = {"status_operation": Operation.Status.SUCCESS}
 

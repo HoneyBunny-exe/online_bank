@@ -12,7 +12,8 @@ class AccountInfoAPIView(JWTAuthenticationAPIView, FilterMixin):
     def get(self, request):
         try:
             user = request.user
-            filter_dict = self.filter(request, ('account_number', 'type_account', 'currency'))
+            filter_dict = self.filter(request, (('account_number', 'account_number'), ('type_account', 'type_account'),
+                                                ('currency', 'currency')))
             accounts = Account.objects.filter(user=user, **filter_dict).all()
             return Response(serializers.AccountInfoSerializer(accounts, many=True).data)
         except ModelError:

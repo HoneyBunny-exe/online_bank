@@ -11,11 +11,11 @@ class JWTAuthenticationAPIView(APIView):
 class FilterMixin:
     def filter(self, request, filter_fields):
         filter_dict = {}
-        for field in filter_fields:
+        for key, field in filter_fields:
             value = request.GET.get(field, None)
             if value is None:
                 continue
-            filter_dict.update({field: value})
+            filter_dict.update({key: value})
 
         return filter_dict
 

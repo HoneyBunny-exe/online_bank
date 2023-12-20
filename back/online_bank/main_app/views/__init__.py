@@ -7,3 +7,4 @@ from .authorization import AuthorizationAPIView
 from .registration import RegistrationAPIView
 from .currancy import CurrencyAPIView
 from .transfer_money import TransferMoneyAPIView
+from .operations import OperationInfoAPIView

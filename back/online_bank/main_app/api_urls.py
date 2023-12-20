@@ -13,4 +13,5 @@ urlpatterns = [
     path('create_account/', views.CreateAccountAPIView.as_view()),
     path('create_card/', views.CreateCardAPIView.as_view()),
     path('change_status_card/', views.BlockCardAPIView.as_view()),
+    path('get_operations/', views.OperationInfoAPIView.as_view()),
 ]
