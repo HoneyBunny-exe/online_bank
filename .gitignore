@@ -137,3 +137,5 @@ dmypy.json
 translate_row.py
 commands_pybabel.txt
 middleware_example.py
+.db_passfile
+.pg_service.conf
