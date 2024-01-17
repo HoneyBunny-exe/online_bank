@@ -69,7 +69,7 @@ class CreateCardSerializer(serializers.Serializer):
 
 
 class BlockCardSerializer(serializers.Serializer):
-    token_card = serializers.CharField()
+    token_card = serializers.UUIDField()
     is_activated = serializers.BooleanField()
     _response = None
 

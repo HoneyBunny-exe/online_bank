@@ -1,6 +1,4 @@
-import base64
-
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework import exceptions
 import config
@@ -104,7 +102,7 @@ class CreateChangeAuthSerializer(serializers.Serializer):
             raise exceptions.ValidationError("Поле password и поле re_password должны совпадать.")
 
     def validate(self, attrs):
-        login = attrs.get("login", None)
+        login = attrs.get("new_login", None)
         password = attrs.get("password", None)
         re_password = attrs.get("re_password", None)
         if not (login or (password and re_password)):
